@@ -19,11 +19,12 @@ import (
 )
 
 const banner = `
-┌─┐┬┌─┐┌─┐
-├─┘││ ┬│ │
-┴  ┴└─┘└─┘
+ ____  __    ___  ____  _  _   __   ____  __ _
+(  __)/ _\  / __)(  __)( \/ ) / _\ / ___)(  / )
+ ) _)/    \( (__  ) _) / \/ \/    \\___ \ )  (
+(__) \_/\_/ \___)(____)\_)(_/\_/\_/(____/(__\_)
 
-Go (Golang) Face detection library.
+Face mask generator
     Version: %s
 
 `
@@ -38,10 +39,6 @@ var (
 	flpcs     map[string][]*pigo.FlpCascade
 	imgParams *pigo.ImageParams
 )
-
-type point struct {
-	x, y int
-}
 
 // faceDetector struct contains Pigo face detector general settings.
 type faceDetector struct {
@@ -194,7 +191,6 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection) error {
 		perturb  = 63
 		puploc   *pigo.Puploc
 		imgScale float64
-		p1, p2   point
 	)
 
 	for _, face := range faces {
@@ -225,32 +221,10 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection) error {
 				Scale:    float32(face.Scale) * 0.25,
 				Perturbs: perturb,
 			}
-
 			rightEye := plc.RunDetector(*puploc, *imgParams, fd.angle, false)
 
-			flp := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, false)
-			if flp.Row > 0 && flp.Col > 0 {
-				drawDetections(dc,
-					float64(flp.Col),
-					float64(flp.Row),
-					float64(flp.Scale*0.5),
-					color.RGBA{R: 0, G: 0, B: 255, A: 255},
-					false,
-				)
-			}
-			p1 = point{x: flp.Row, y: flp.Col}
-
-			flp = flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
-			if flp.Row > 0 && flp.Col > 0 {
-				drawDetections(dc,
-					float64(flp.Col),
-					float64(flp.Row),
-					float64(flp.Scale*0.5),
-					color.RGBA{R: 0, G: 0, B: 255, A: 255},
-					false,
-				)
-			}
-			p2 = point{x: flp.Row, y: flp.Col}
+			flp1 := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, false)
+			flp2 := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
 
 			mask, err := os.OpenFile("assets/facemask.png", os.O_RDONLY, 0755)
 			defer mask.Close()
@@ -264,11 +238,9 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection) error {
 			}
 
 			// Calculate the lean angle between the two mouth points.
-			angle := 1 - (math.Atan2(float64(p2.y-p1.y), float64(p2.x-p1.x)) * 180 / math.Pi / 90)
+			angle := 1 - (math.Atan2(float64(flp2.Col-flp1.Col), float64(flp2.Row-flp1.Row)) * 180 / math.Pi / 90)
 			dx, dy := maskImg.Bounds().Dx(), maskImg.Bounds().Dy()
 
-			fmt.Println(face.Scale)
-			fmt.Println(dx, dy)
 			if face.Scale < dx || face.Scale < dy {
 				if dx > dy {
 					imgScale = float64(face.Scale) / float64(dx)
@@ -276,16 +248,12 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection) error {
 					imgScale = float64(face.Scale) / float64(dy)
 				}
 			}
-			fmt.Println(imgScale)
 			width, height := float64(dx)*imgScale*0.75, float64(dy)*imgScale*0.75
-			tx := face.Row - int(width/2*0.8)
-			ty := p1.x + (p1.x-p2.x)/2 - int(height/2)
+			tx := face.Col - int(width/2)
+			ty := flp1.Row + (flp1.Row-flp2.Row)/2 - int(height/2)
 
 			resized := imaging.Resize(maskImg, int(width), int(height), imaging.Lanczos)
 			aligned := imaging.Rotate(resized, angle, color.Transparent)
-
-			fmt.Println(tx, ty)
-			fmt.Println(width, height)
 			dc.DrawImage(aligned, tx, ty)
 		}
 	}
