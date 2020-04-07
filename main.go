@@ -195,16 +195,6 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection) error {
 
 	for _, face := range faces {
 		if face.Q > qThresh {
-			dc.DrawRectangle(
-				float64(face.Col-face.Scale/2),
-				float64(face.Row-face.Scale/2),
-				float64(face.Scale),
-				float64(face.Scale),
-			)
-			dc.SetLineWidth(2.0)
-			dc.SetStrokeStyle(gg.NewSolidPattern(color.RGBA{R: 255, G: 0, B: 0, A: 255}))
-			dc.Stroke()
-
 			// left eye
 			puploc = &pigo.Puploc{
 				Row:      face.Row - int(0.075*float32(face.Scale)),
@@ -250,7 +240,7 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection) error {
 			}
 			width, height := float64(dx)*imgScale*0.75, float64(dy)*imgScale*0.75
 			tx := face.Col - int(width/2)
-			ty := flp1.Row + (flp1.Row-flp2.Row)/2 - int(height/2)
+			ty := flp1.Row + (flp1.Row-flp2.Row)/2 - int(height*0.4)
 
 			resized := imaging.Resize(maskImg, int(width), int(height), imaging.Lanczos)
 			aligned := imaging.Rotate(resized, angle, color.Transparent)
