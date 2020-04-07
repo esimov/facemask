@@ -8,6 +8,9 @@ $ go get -u -v github.com/esimov/facemask && cd $GOPATH/src/github.com/esimov/fa
 $ go install
 ```
 
+### Other alternatives
+If you don't have Go already installed or don't want to install Go you can get the cross-compiled binaries in the [releases](https://github.com/esimov/facemask/releases) folder.
+
 ```bash
 $ facemask -h
  ____  __    ___  ____  _  _   __   ____  __ _
