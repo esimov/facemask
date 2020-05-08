@@ -57,24 +57,27 @@ type faceDetector struct {
 func main() {
 	var (
 		// Flags
-		source       = flag.String("in", "", "Source image")
-		destination  = flag.String("out", "", "Destination image")
-		minSize      = flag.Int("min", 20, "Minimum size of face")
-		maxSize      = flag.Int("max", 1000, "Maximum size of face")
-		shiftFactor  = flag.Float64("shift", 0.1, "Shift detection window by percentage")
-		scaleFactor  = flag.Float64("scale", 1.1, "Scale detection window by percentage")
-		angle        = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
-		iouThreshold = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
+		source        = flag.String("in", "", "Source image")
+		destination   = flag.String("out", "", "Destination image")
+		cascadeFile   = flag.String("cf", "cascades/facefinder", "Cascade binary file")
+		puplocCascade = flag.String("plc", "cascades/puploc", "Pupil localization cascade file")
+		flplocDir     = flag.String("flpdir", "cascades/lps", "The facial landmark points base directory")
+		minSize       = flag.Int("min", 20, "Minimum size of face")
+		maxSize       = flag.Int("max", 1000, "Maximum size of face")
+		shiftFactor   = flag.Float64("shift", 0.1, "Shift detection window by percentage")
+		scaleFactor   = flag.Float64("scale", 1.1, "Scale detection window by percentage")
+		angle         = flag.Float64("angle", 0.0, "0.0 is 0 radians and 1.0 is 2*pi radians")
+		iouThreshold  = flag.Float64("iou", 0.2, "Intersection over union (IoU) threshold")
 	)
-
+	log.SetFlags(0)
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, fmt.Sprintf(banner, Version))
 		flag.PrintDefaults()
 	}
 	flag.Parse()
 
-	if len(*source) == 0 || len(*destination) == 0 {
-		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf cascade/facefinder")
+	if len(*source) == 0 || len(*destination) == 0 || len(*cascadeFile) == 0 || len(*puplocCascade) == 0 || len(*flplocDir) == 0 {
+		log.Fatal("Usage: facemask -in input.jpg -out out.png -cf=/path/to/faceCascade -plc=/path/to/eyesCascade -flpdir=/path/to/landmarkCascades")
 	}
 
 	fileTypes := []string{".jpg", ".jpeg", ".png"}
@@ -101,9 +104,9 @@ func main() {
 		shiftFactor:  *shiftFactor,
 		scaleFactor:  *scaleFactor,
 		iouThreshold: *iouThreshold,
-		faceCascade:  "cascades/facefinder",
-		eyesCascade:  "cascades/puploc",
-		flplocDir:    "cascades/lps",
+		faceCascade:  *cascadeFile,
+		eyesCascade:  *puplocCascade,
+		flplocDir:    *flplocDir,
 	}
 	faces, err := fd.detectFaces(*source)
 	if err != nil {
