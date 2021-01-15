@@ -74,7 +74,7 @@ func main() {
 	flag.Parse()
 
 	if len(*source) == 0 || len(*destination) == 0 {
-		log.Fatal("Usage: pigo -in input.jpg -out out.png -cf cascade/facefinder")
+		log.Fatal("Usage: go run main.go -in input.jpg -out out.png")
 	}
 
 	fileTypes := []string{".jpg", ".jpeg", ".png"}
@@ -213,8 +213,8 @@ func (fd *faceDetector) drawFaces(faces []pigo.Detection) error {
 			}
 			rightEye := plc.RunDetector(*puploc, *imgParams, fd.angle, false)
 
-			flp1 := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, false)
-			flp2 := flpcs["lp84"][0].FindLandmarkPoints(leftEye, rightEye, *imgParams, perturb, true)
+			flp1 := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, false)
+			flp2 := flpcs["lp84"][0].GetLandmarkPoint(leftEye, rightEye, *imgParams, perturb, true)
 
 			mask, err := os.OpenFile("assets/facemask.png", os.O_RDONLY, 0755)
 			defer mask.Close()
